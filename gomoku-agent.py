@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import random
 from typing import Tuple
 import re
@@ -6,9 +7,8 @@ import json
 # Import the game framework components
 from gomoku.agents.base import Agent
 from gomoku.core.models import GameState, Player
-from gomoku.arena import GomokuArena
-from gomoku.utils import ColorBoardFormatter
 from gomoku.llm.openai_client import OpenAIGomokuClient
+
 
 class GomokuAgent(Agent):
     """A Gomoku LLM agent that uses a language model to make strategic moves."""
@@ -16,6 +16,7 @@ class GomokuAgent(Agent):
     def __init__(self, agent_id: str):
         super().__init__(agent_id)
         print(f"🎮 Created GomokuAgent: {agent_id}")
+        self.llm = None  # Ensure llm is initialized as None initially
 
     def _setup(self):
         """Setup the LLM client, model, and system prompt."""
@@ -25,8 +26,8 @@ class GomokuAgent(Agent):
         self.system_prompt = self._create_system_prompt()
 
         # Setup the LLM client using OpenAIGomokuClient
-        self.llm_client = OpenAIGomokuClient(
-            model="qwen/qwen3-8b",  # Use the correct model name
+        self.llm = OpenAIGomokuClient(
+            model="qwen3-8b",  # Use the correct model name
         )
 
         print("✅ Agent setup complete!")
@@ -90,7 +91,7 @@ Your move should follow this format (without explanation):
         ]
 
         # Send the messages to the language model and get the response
-        content = await self.llm_client.complete(messages)
+        content = await self.llm.complete(messages)
 
         # Parse the LLM response to extract move coordinates
         try:
