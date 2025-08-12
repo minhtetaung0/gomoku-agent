@@ -2,21 +2,29 @@ import re
 import json
 from gomoku import Agent
 from gomoku.llm import OpenAIGomokuClient
+from gomoku.llm import HuggingFaceClient
 from gomoku.core.models import Player
 
 class GomokuAgent(Agent):
-    """
-    A Gomoku AI agent that uses a language model to make strategic moves.
-    Inherits from the base Agent class provided by the Gomoku framework.
-    """
+    """A Gomoku LLM agent that uses a language model to make strategic moves."""
+
+    def __init__(self, agent_id: str):
+        super().__init__(agent_id)
+        print(f"🎮 Created GomokuAgent: {agent_id}")
 
     def _setup(self):
-        """
-        Initialize the agent by setting up the language model client.
-        This method is called once when the agent is created.
-        """
-        # Using the deepseek model for enhanced strategy.
-        self.llm = OpenAIGomokuClient(model="deepseek/deepseek-r1-0528-qwen3-8b")
+        """Setup the LLM client, model, and system prompt."""
+        print("⚙️ Setting up Gomoku agent...")
+
+        # Define system prompt for the agent
+        self.system_prompt = self._create_system_prompt()
+
+        # Setup the LLM client using OpenAIGomokuClient
+        self.llm_client = OpenAIGomokuClient(
+            model="deepseek/deepseek-r1-0528-qwen3-8b",  # Use the correct model name
+        )
+
+        print("✅ Agent setup complete!")
 
     async def get_move(self, game_state):
         """
