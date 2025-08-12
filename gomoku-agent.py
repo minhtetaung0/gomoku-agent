@@ -15,32 +15,6 @@ class GomokuAgent(Agent):
         super().__init__(agent_id)
         print(f"🎮 Created GomokuAgent: {agent_id}")
 
-    def _setup(self):
-        """Setup the LLM client, model, and system prompt."""
-        print("⚙️ Setting up Gomoku agent...")
-
-        # Define system prompt for the agent
-        self.system_prompt = self._create_system_prompt()
-
-        # Setup the LLM client using OpenAIGomokuClient
-        self.llm_client = OpenAIGomokuClient(
-            model="qwen/qwen3-8b",  # Use the correct model name
-        )
-
-        print("✅ Agent setup complete!")
-
-    def _create_system_prompt(self) -> str:
-        """Create the system prompt to set the context for the agent."""
-        return (
-            "You are a highly skilled Gomoku AI agent playing on an 8x8 board. "
-            "The goal of the game is to get five consecutive stones in a row, "
-            "either horizontally, vertically, or diagonally. Your moves should always aim to "
-            "either block the opponent from winning or advance towards winning yourself. "
-            "In the event that there is no immediate winning or blocking move, select the best strategic move. "
-            "You should only provide your move as row and column coordinates, formatted as {'row': <row_number>, 'col': <col_number>}. "
-            "Never explain your move in text—only provide the coordinates of your move."
-        )
-
     async def get_move(self, game_state: GameState) -> Tuple[int, int]:
         """
         Generate the next move for the current game state using an LLM.
@@ -107,3 +81,29 @@ Your move should follow this format (without explanation):
 
         # Fallback: if LLM response is invalid, choose the first available legal move
         return game_state.get_legal_moves()[0]
+
+    def _setup(self):
+        """Setup the LLM client, model, and system prompt."""
+        print("⚙️ Setting up Gomoku agent...")
+
+        # Define system prompt for the agent
+        self.system_prompt = self._create_system_prompt()
+
+        # Setup the LLM client using OpenAIGomokuClient
+        self.llm_client = OpenAIGomokuClient(
+            model="qwen/qwen3-8b",  # Use the correct model name
+        )
+
+        print("✅ Agent setup complete!")
+
+    def _create_system_prompt(self) -> str:
+        """Create the system prompt to set the context for the agent."""
+        return (
+            "You are a highly skilled Gomoku AI agent playing on an 8x8 board. "
+            "The goal of the game is to get five consecutive stones in a row, "
+            "either horizontally, vertically, or diagonally. Your moves should always aim to "
+            "either block the opponent from winning or advance towards winning yourself. "
+            "In the event that there is no immediate winning or blocking move, select the best strategic move. "
+            "You should only provide your move as row and column coordinates, formatted as {'row': <row_number>, 'col': <col_number>}. "
+            "Never explain your move in text—only provide the coordinates of your move."
+        )
