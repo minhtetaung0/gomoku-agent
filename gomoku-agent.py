@@ -11,9 +11,17 @@ from gomoku.llm.openai_client import OpenAIGomokuClient
 class GomokuAgent(Agent):
     """A Gomoku LLM agent that uses a language model to make strategic moves."""
 
-    def __init__(self, agent_id: str):
-        super().__init__(agent_id)
-        print(f"🎮 Created GomokuAgent: {agent_id}")
+    def _setup(self):
+        """Setup the LLM client, model, and system prompt."""
+        print("⚙️ Setting up Gomoku agent...")
+
+        # Define system prompt for the agent
+        self.system_prompt = self._create_system_prompt()
+
+        # Setup the LLM client using OpenAIGomokuClient
+        self.llm_client = OpenAIGomokuClient(
+            model="qwen/qwen3-8b",  # Use the correct model name
+        )
 
     async def get_move(self, game_state: GameState) -> Tuple[int, int]:
         """
@@ -82,19 +90,6 @@ Your move should follow this format (without explanation):
         # Fallback: if LLM response is invalid, choose the first available legal move
         return game_state.get_legal_moves()[0]
 
-    def _setup(self):
-        """Setup the LLM client, model, and system prompt."""
-        print("⚙️ Setting up Gomoku agent...")
-
-        # Define system prompt for the agent
-        self.system_prompt = self._create_system_prompt()
-
-        # Setup the LLM client using OpenAIGomokuClient
-        self.llm_client = OpenAIGomokuClient(
-            model="qwen/qwen3-8b",  # Use the correct model name
-        )
-
-        print("✅ Agent setup complete!")
 
     def _create_system_prompt(self) -> str:
         """Create the system prompt to set the context for the agent."""
