@@ -27,7 +27,7 @@ class GomokuAgent(Agent):
 
         # Setup the LLM client using OpenAIGomokuClient
         self.llm_client = OpenAIGomokuClient(
-            model="qwen/qwen3-8b",  # Use the correct model name
+            model="qwen3-8b",  # Use the correct model name
         )
 
         print("✅ Agent setup complete!")
