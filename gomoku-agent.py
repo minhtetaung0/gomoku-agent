@@ -1,9 +1,13 @@
-import re
-import json
-from gomoku import Agent
-from gomoku.llm import OpenAIGomokuClient
-from gomoku.llm import HuggingFaceClient
-from gomoku.core.models import Player
+# Import the necessary modules
+import random
+from typing import Tuple
+
+# Import the game framework components
+from gomoku.agents.base import Agent
+from gomoku.core.models import GameState, Player
+from gomoku.arena import GomokuArena
+from gomoku.utils import ColorBoardFormatter
+from gomoku.llm.openai_client import OpenAIGomokuClient
 
 class GomokuAgent(Agent):
     """A Gomoku LLM agent that uses a language model to make strategic moves."""
@@ -21,7 +25,7 @@ class GomokuAgent(Agent):
 
         # Setup the LLM client using OpenAIGomokuClient
         self.llm_client = OpenAIGomokuClient(
-            model="deepseek/deepseek-r1-0528-qwen3-8b",  # Use the correct model name
+            model="qwen/qwen3-8b",  # Use the correct model name
         )
 
         print("✅ Agent setup complete!")
