@@ -1,6 +1,6 @@
 {
     "name": "GomokuAgent",
-    "agent_class": "gomoku_agent.GomokuAgent",
+    "agent_class": "gomoku-agent.GomokuAgent",
     "author": "Your Name or Organization",
     "description": "This is a strategic Gomoku AI agent that uses the deepseek-r1-0528-qwen3-8b model for decision-making. The agent aims to win by aligning five consecutive stones or blocking the opponent's moves."
 }
