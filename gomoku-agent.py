@@ -8,19 +8,17 @@ from gomoku.agents.base import Agent
 from gomoku.core.models import GameState, Player
 from gomoku.llm.openai_client import OpenAIGomokuClient
 
+
 class GomokuAgent(Agent):
     """A Gomoku LLM agent that uses a language model to make strategic moves."""
 
     def _setup(self):
-        """Setup the LLM client, model, and system prompt."""
-
-        # Define system prompt for the agent
-        # self.system_prompt = self._create_system_prompt()
-
-        # Setup the LLM client using OpenAIGomokuClient
-        self.llm_client = OpenAIGomokuClient(
-            model="qwen/qwen3-8b",  # Use the correct model name
-        )
+        """
+        Initialize the agent by setting up the language model client.
+        This method is called once when the agent is created.
+        """
+        # Create the LLM client using OpenAIGomokuClient with the specified model
+        self.llm = OpenAIGomokuClient(model="qwen/qwen3-8b")
 
     async def get_move(self, game_state: GameState) -> Tuple[int, int]:
         """
@@ -42,7 +40,7 @@ class GomokuAgent(Agent):
         board_str = game_state.format_board("standard")
         board_size = game_state.board_size
 
-        # Enhanced Prompt Engineering for better decision-making
+        # Prepare the conversation messages for the language model
         messages = [
             {
                 "role": "system",
@@ -69,7 +67,7 @@ Your move should follow this format (without explanation):
         ]
 
         # Send the messages to the language model and get the response
-        content = await self.llm_client.complete(messages)
+        content = await self.llm.complete(messages)
 
         # Parse the LLM response to extract move coordinates
         try:
@@ -86,18 +84,6 @@ Your move should follow this format (without explanation):
             # If JSON parsing fails, continue to fallback strategy
             pass
 
-        # Fallback: if LLM response is invalid, choose the first available legal move
-        return game_state.get_legal_moves()[0]
-
-
-    # def _create_system_prompt(self) -> str:
-    #     """Create the system prompt to set the context for the agent."""
-    #     return (
-    #         "You are a highly skilled Gomoku AI agent playing on an 8x8 board. "
-    #         "The goal of the game is to get five consecutive stones in a row, "
-    #         "either horizontally, vertically, or diagonally. Your moves should always aim to "
-    #         "either block the opponent from winning or advance towards winning yourself. "
-    #         "In the event that there is no immediate winning or blocking move, select the best strategic move. "
-    #         "You should only provide your move as row and column coordinates, formatted as {'row': <row_number>, 'col': <col_number>}. "
-    #         "Never explain your move in text—only provide the coordinates of your move."
-    #     )
+        # Fallback: if LLM response is invalid, choose a random legal move
+        legal_moves = game_state.get_legal_moves()
+        return random.choice(legal_moves)
