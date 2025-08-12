@@ -14,7 +14,6 @@ class GomokuAgent(Agent):
     def __init__(self, agent_id: str):
         super().__init__(agent_id)
         print(f"🎮 Created GomokuAgent: {agent_id}")
-        self.llm_client = None
 
     def _setup(self):
         """Setup the LLM client, model, and system prompt."""
