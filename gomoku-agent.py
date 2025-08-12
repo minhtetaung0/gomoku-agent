@@ -1,6 +1,8 @@
 # Import the necessary modules
 import random
 from typing import Tuple
+import re
+import json
 
 # Import the game framework components
 from gomoku.agents.base import Agent
