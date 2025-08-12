@@ -90,7 +90,7 @@ Your move should follow this format (without explanation):
         ]
 
         # Send the messages to the language model and get the response
-        content = await self.llm.complete(messages)
+        content = await self.llm_client.complete(messages)
 
         # Parse the LLM response to extract move coordinates
         try:
