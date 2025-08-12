@@ -1,7 +1,8 @@
 import re
+import os
 import json
+from transformers import AutoTokenizer, AutoModelForCausalLM
 from gomoku import Agent
-from gomoku.llm import OpenAIGomokuClient
 from gomoku.core.models import Player
 
 class GomokuAgent(Agent):
@@ -15,8 +16,10 @@ class GomokuAgent(Agent):
         Initialize the agent by setting up the language model client.
         This method is called once when the agent is created.
         """
-        # Using the deepseek model for enhanced strategy.
-        self.llm = OpenAIGomokuClient(model="deepseek/deepseek-r1-0528-qwen3-8b")
+        # Load the tokenizer and model from Hugging Face using the HF_TOKEN for authentication
+        model_name = "deepseek/deepseek-r1-0528-qwen3-8b"
+        self.tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=os.getenv("HF_TOKEN"))
+        self.model = AutoModelForCausalLM.from_pretrained(model_name, use_auth_token=os.getenv("HF_TOKEN"))
 
     async def get_move(self, game_state):
         """
