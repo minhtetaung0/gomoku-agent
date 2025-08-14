@@ -22,7 +22,7 @@ class GomokuAgent(Agent):
         # self.system_prompt = self._create_system_prompt()
 
         # Create the LLM client using OpenAIGomokuClient with the specified model
-        self.llm = OpenAIGomokuClient(model="qwen/qwen3-8b")
+        self.llm = OpenAIGomokuClient(model="qwen/qwen3-8b", temperature=0)
 
     async def get_move(self, game_state: GameState) -> Tuple[int, int]:
         """
@@ -103,14 +103,3 @@ Here is the current board:
         legal_moves = game_state.get_legal_moves()
         return random.choice(legal_moves)
 
-    # def _create_system_prompt(self) -> str:
-    #     """Create the system prompt to set the context for the agent."""
-    #     return (
-    #         "You are a highly skilled Gomoku AI agent playing on an 8x8 board. "
-    #         "The goal of the game is to get five consecutive stones in a row, "
-    #         "either horizontally, vertically, or diagonally. Your moves should always aim to "
-    #         "either block the opponent from winning or advance towards winning yourself. "
-    #         "In the event that there is no immediate winning or blocking move, select the best strategic move. "
-    #         "You should only provide your move as row and column coordinates, formatted as {'row': <row_number>, 'col': <col_number>}. "
-    #         "Never explain your move in text—only provide the coordinates of your move."
-    #     )
