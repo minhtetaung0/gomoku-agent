@@ -18,8 +18,8 @@ class GomokuAgent(Agent):
         This method is called once when the agent is created.
         """
 
-        # Define system prompt for the agent
-        self.system_prompt = self._create_system_prompt()
+        # # Define system prompt for the agent
+        # self.system_prompt = self._create_system_prompt()
 
         # Create the LLM client using OpenAIGomokuClient with the specified model
         self.llm = OpenAIGomokuClient(model="qwen/qwen3-8b")
@@ -46,29 +46,40 @@ class GomokuAgent(Agent):
 
         # Prepare the conversation messages for the language model
         messages = [
-            {
-                "role": "system",
-                "content": f"""You are an advanced Gomoku AI agent skilled at strategic decision-making. You are playing on an 8x8 board, where the goal is to align five stones (either 'X' or 'O') in a row, vertically, horizontally, or diagonally.
-You are currently playing as {player}, and your opponent is {rival}.
-Analyze the current board configuration and consider the following:
-- Block the opponent if they are about to win.
-- Make moves that help you get five-in-a-row or set up your next moves.
-- You can respond with only one valid move.
+    {
+        "role": "system",
+        "content": f"""
+You are a ruthless Gomoku tactician. Board: 8x8. Win condition: 5 in a row (rows/cols/diagonals).
+You play as {player}. Opponent is {rival}. You must output ONE legal move only.
 
-Your task is to provide the best move to make based on the current state of the board.
+## Hard Priorities (apply in order)
+1) WIN NOW: If you can make exactly five-in-a-row this move, play that cell.
+2) BLOCK LOSS: If opponent can win next move with one placement, block that cell.
+3) CREATE FORKS: Prefer moves that create two simultaneous threats (e.g., two open fours or four+broken-four).
+4) POWER FOURS/THREES:
+   • Extend your open four or broken four.
+   • Block opponent open four or double-three/double-threat.
+   • Extend your open three to open four.
+5) SHAPE/PLACEMENT HEURISTICS (when no immediate tactics above apply):
+   • Prefer extending your longest continuous line(s).
+   • Prefer moves adjacent (Chebyshev distance ≤ 1) to your stones over isolated ones.
+   • Prefer center/central lanes early if options are equal.
+   • Avoid plays that are two or more cells away from all stones unless they create a new high-threat line.
 
+## Legality & Determinism
+- Move must be empty and inside the board (0–{board_size-1} for row and col).
+- If multiple moves are tied by the same highest priority, choose the one with the smallest (row, col) lexicographically to be deterministic.
+
+## Output Format (STRICT)
+Return ONLY a single compact JSON object on one line:
+{{"row": <int>, "col": <int>}}
+No explanations. No analysis. No Markdown. No code fences. No 'think' tags. No extra keys.
 Here is the current board:
 
 {board_str}
-
-Your move should follow this format (without explanation): 
-{{ "row": <row_number>, "col": <col_number> }}"""
-            },
-            {
-                "role": "user",
-                "content": f"Based on the board above, please provide your best move to win the game or block the opponent. Remember, winning requires five consecutive stones in a row, either vertically, horizontally, or diagonally."
-            }
-        ]
+"""
+    }
+]
 
         # Send the messages to the language model and get the response
         content = await self.llm.complete(messages)
@@ -92,14 +103,14 @@ Your move should follow this format (without explanation):
         legal_moves = game_state.get_legal_moves()
         return random.choice(legal_moves)
 
-    def _create_system_prompt(self) -> str:
-        """Create the system prompt to set the context for the agent."""
-        return (
-            "You are a highly skilled Gomoku AI agent playing on an 8x8 board. "
-            "The goal of the game is to get five consecutive stones in a row, "
-            "either horizontally, vertically, or diagonally. Your moves should always aim to "
-            "either block the opponent from winning or advance towards winning yourself. "
-            "In the event that there is no immediate winning or blocking move, select the best strategic move. "
-            "You should only provide your move as row and column coordinates, formatted as {'row': <row_number>, 'col': <col_number>}. "
-            "Never explain your move in text—only provide the coordinates of your move."
-        )
+    # def _create_system_prompt(self) -> str:
+    #     """Create the system prompt to set the context for the agent."""
+    #     return (
+    #         "You are a highly skilled Gomoku AI agent playing on an 8x8 board. "
+    #         "The goal of the game is to get five consecutive stones in a row, "
+    #         "either horizontally, vertically, or diagonally. Your moves should always aim to "
+    #         "either block the opponent from winning or advance towards winning yourself. "
+    #         "In the event that there is no immediate winning or blocking move, select the best strategic move. "
+    #         "You should only provide your move as row and column coordinates, formatted as {'row': <row_number>, 'col': <col_number>}. "
+    #         "Never explain your move in text—only provide the coordinates of your move."
+    #     )
