@@ -3,7 +3,6 @@ from typing import Tuple, List, Optional
 import re
 import json
 
-# Import the game framework components
 from gomoku.agents.base import Agent
 from gomoku.core.models import GameState, Player
 from gomoku.llm.openai_client import OpenAIGomokuClient
@@ -17,12 +16,9 @@ class GomokuAgent(Agent):
         Initialize the agent by setting up the language model client.
         This method is called once when the agent is created.
         """
-        # self.system_prompt = self._create_system_prompt()
         self.llm = OpenAIGomokuClient(model="qwen/qwen3-8b", temperature=0)
 
-    # ----------------------------
-    # Minimal smart fallback tools
-    # ----------------------------
+
     def _get_board(self, game_state: GameState) -> Optional[List[List[str]]]:
         """Safely access the internal board if available (list[list[str]])."""
         return getattr(game_state, "board", None)
@@ -34,16 +30,13 @@ class GomokuAgent(Agent):
             return False
         board[r][c] = sym
         try:
-            # count consecutive in 4 directions (pairs): (dr,dc)
             dirs = [(1,0), (0,1), (1,1), (1,-1)]
             for dr, dc in dirs:
                 cnt = 1
-                # forward
                 i, j = r + dr, c + dc
                 while 0 <= i < n and 0 <= j < n and board[i][j] == sym:
                     cnt += 1
                     i += dr; j += dc
-                # backward
                 i, j = r - dr, c - dc
                 while 0 <= i < n and 0 <= j < n and board[i][j] == sym:
                     cnt += 1
@@ -52,7 +45,7 @@ class GomokuAgent(Agent):
                     return True
             return False
         finally:
-            board[r][c] = '.'  # undo
+            board[r][c] = '.'
 
     def _longest_line_after(self, board: List[List[str]], r: int, c: int, sym: str) -> int:
         """Return the longest contiguous line length achieved at (r,c) after placing sym."""
@@ -85,13 +78,11 @@ class GomokuAgent(Agent):
                     d = max(abs(i - r), abs(j - c))
                     if d < best:
                         best = d
-        # If no stones yet, return a large number (will be balanced by center bias)
         return best if best != 10**9 else 10**6
 
     def _center_bias(self, n: int, r: int, c: int) -> float:
         """Negative distance to center to prefer central lanes on empty/early boards."""
         center = (n - 1) / 2.0
-        # Use Chebyshev distance for grid symmetry
         d = max(abs(r - center), abs(c - center))
         return -d
 
@@ -108,18 +99,15 @@ class GomokuAgent(Agent):
 
         board = self._get_board(game_state)
 
-        # If we cannot access the board grid, choose a deterministic center-oriented move.
         if board is None:
             cx, cy = (n - 1) / 2.0, (n - 1) / 2.0
             legal.sort(key=lambda rc: (abs(rc[0] - cx) + abs(rc[1] - cy), rc[0], rc[1]))
             return legal[0]
 
-        # 1) Win immediately if possible
         for r, c in legal:
             if self._five_after_move(board, r, c, me):
                 return (r, c)
 
-        # 2) Block opponent's immediate win (open 4 -> 5)
         opp_win_cells = []
         for r, c in legal:
             if self._five_after_move(board, r, c, opp):
@@ -128,7 +116,6 @@ class GomokuAgent(Agent):
             opp_win_cells.sort()
             return opp_win_cells[0]
 
-        # 3) Block dangerous opponent threats (open 3/4 patterns)
         threat_cells = []
         for r, c in legal:
             ll = self._longest_line_after(board, r, c, opp)
@@ -138,7 +125,6 @@ class GomokuAgent(Agent):
             threat_cells.sort()
             return threat_cells[0]
 
-        # 4) Heuristic scoring
         best_score = -10**9
         best_moves = []
 
@@ -167,17 +153,14 @@ class GomokuAgent(Agent):
         Returns:
             tuple: (row, col) coordinates of the chosen move
         """
-        # Get the current player's symbol (e.g., 'X' or 'O')
+
         player = self.player.value
 
-        # Determine the opponent's symbol by checking which player we are
         rival = (Player.WHITE if self.player == Player.BLACK else Player.BLACK).value
 
-        # Convert the game board to a human-readable string format
         board_str = game_state.format_board("standard")
         board_size = game_state.board_size
 
-        # Prepare the conversation messages for the language model
         messages = [
             {
                 "role": "system",
@@ -214,28 +197,20 @@ Here is the current board:
             }
         ]
 
-        # Send the messages to the language model and get the response
         content = await self.llm.complete(messages)
 
-        # Parse the LLM response to extract move coordinates
         try:
-            # Use regex to find JSON-like content in the response
             if m := re.search(r"{[^}]+}", content, re.DOTALL):
-                # Parse the JSON to extract row and column
                 move = json.loads(m.group(0))
                 row, col = (move["row"], "col" in move and move["col"] or move.get("column"))
-                # normalize if different key names are ever used
-                if isinstance(col, bool):  # guard against weird parsing
+                if isinstance(col, bool):
                     col = move["col"]
-                # Validate that the proposed move is legal
                 if game_state.is_valid_move(row, col):
                     return (row, col)
         except Exception:
             pass
 
-        # Smarter fallback (win/block/heuristic) instead of pure random
-        # Assumes '.' is empty on the internal board (common in Gomoku engines).
-        # If internal board not available, center-biased deterministic choice is used.
+
         me = player
         opp = rival
         return self._smart_fallback(game_state, me, opp)
