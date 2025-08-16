@@ -100,7 +100,8 @@ class GomokuAgent(Agent):
         Smarter-than-random fallback:
         1) Win now
         2) Block opponent's immediate win
-        3) Heuristic score: longest line, adjacency, center bias
+        3) Block dangerous opponent threats (open 3/4)
+        4) Heuristic score: longest line, adjacency, center bias
         """
         legal = game_state.get_legal_moves()
         n = game_state.board_size
@@ -118,23 +119,30 @@ class GomokuAgent(Agent):
             if self._five_after_move(board, r, c, me):
                 return (r, c)
 
-        # 2) Block opponent's immediate win
+        # 2) Block opponent's immediate win (open 4 -> 5)
         opp_win_cells = []
         for r, c in legal:
             if self._five_after_move(board, r, c, opp):
                 opp_win_cells.append((r, c))
         if opp_win_cells:
-            opp_win_cells.sort()  # determinism: smallest (row, col)
+            opp_win_cells.sort()
             return opp_win_cells[0]
 
-        # 3) Heuristic scoring
-        #    Score = 100*longest_line + 2*(-nearest_my_dist) + 1*center_bias
-        #    (weights are small and simple to keep code minimal)
+        # 3) Block dangerous opponent threats (open 3/4 patterns)
+        threat_cells = []
+        for r, c in legal:
+            ll = self._longest_line_after(board, r, c, opp)
+            if ll >= 4:  # strong extension for opponent
+                threat_cells.append((r, c))
+        if threat_cells:
+            threat_cells.sort()
+            return threat_cells[0]
+
+        # 4) Heuristic scoring
         best_score = -10**9
         best_moves = []
 
         for r, c in legal:
-            # prefer adjacent-to-my-stones and extending my lines
             ll = self._longest_line_after(board, r, c, me)
             nd = self._nearest_my_stone_dist(board, r, c, me)
             cb = self._center_bias(n, r, c)
@@ -146,7 +154,7 @@ class GomokuAgent(Agent):
             elif score == best_score:
                 best_moves.append((r, c))
 
-        best_moves.sort()  # determinism tie-break
+        best_moves.sort()
         return best_moves[0] if best_moves else random.choice(legal)
 
     async def get_move(self, game_state: GameState) -> Tuple[int, int]:
